@@ -4,341 +4,293 @@ To implement the backend for the Job Application Tracker, here’s an API design
 
 ---
 
-### 1. **User Authentication and Profiles**
+# Job Application Tracker API Design
 
-#### **POST /api/auth/register**
-- **Description**: User registration endpoint to create a new account.
+## **1. User Authentication and Profiles**
+
+### **Endpoints**
+
+#### **1.1 User Registration**
+**POST** `/api/auth/register`
+- **Description**: Allows users to register an account.
 - **Request Body**:
-  ```json
-  {
-    "username": "user1",
-    "email": "user1@example.com",
-    "password": "password123"
-  }
-  ```
+```json
+{
+  "name": "Shreyans Saklecha",
+  "email": "saklechashreyans1999@gmail.com",
+  "password": "securepassword123"
+}
+```
 - **Response**:
-  ```json
-  {
-    "message": "User registered successfully",
-    "userId": 1
+```json
+{
+  "message": "User registered successfully",
+  "user": {
+    "id": 1,
+    "name": "Shreyans Saklecha",
+    "email": "saklechashreyans1999@gmail.com"
   }
-  ```
-- **Notes**: Password should be hashed before storing in the database.
+}
+```
+- **Authentication**: Not required.
 
-#### **POST /api/auth/login**
-- **Description**: User login endpoint for authentication.
+#### **1.2 User Login**
+**POST** `/api/auth/login`
+- **Description**: Logs in a user and returns a JWT.
 - **Request Body**:
-  ```json
-  {
-    "email": "user1@example.com",
-    "password": "password123"
-  }
-  ```
+```json
+{
+  "email": "saklechashreyans1999@gmail.com",
+  "password": "securepassword123"
+}
+```
 - **Response**:
-  ```json
-  {
-    "token": "JWT_TOKEN"
+```json
+{
+  "token": "jwt-token-here",
+  "user": {
+    "id": 1,
+    "name": "Shreyans Saklecha",
+    "email": "saklechashreyans1999@gmail.com"
   }
-  ```
-- **Notes**: Use JWT for authentication. Return a JWT token for future requests.
+}
+```
+- **Authentication**: Not required.
 
-#### **GET /api/users/profile**
-- **Description**: Fetch the authenticated user's profile.
-- **Headers**: 
-  - Authorization: Bearer JWT_TOKEN
-- **Response**:
-  ```json
-  {
-    "username": "user1",
-    "email": "user1@example.com",
-    "careerGoals": "Software Developer"
-  }
-  ```
-
-#### **PUT /api/users/profile**
-- **Description**: Update the user profile.
+#### **1.3 Profile Management**
+**PUT** `/api/users/profile`
+- **Description**: Updates user profile information.
 - **Request Body**:
-  ```json
-  {
-    "username": "newuser1",
-    "email": "newuser1@example.com",
-    "careerGoals": "Full Stack Developer"
-  }
-  ```
+```json
+{
+  "name": "Shreyans Saklecha",
+  "careerGoals": "Aiming for a senior software engineering role"
+}
+```
 - **Response**:
-  ```json
-  {
-    "message": "Profile updated successfully"
+```json
+{
+  "message": "Profile updated successfully",
+  "profile": {
+    "name": "Shreyans Saklecha",
+    "careerGoals": "Aiming for a senior software engineering role"
   }
-  ```
+}
+```
+- **Authentication**: Required.
 
 ---
 
-### 2. **Job Application Logging**
+## **2. Job Application Logging**
 
-#### **POST /api/applications**
-- **Description**: Log a new job application.
+### **Endpoints**
+
+#### **2.1 Log a Job Application**
+**POST** `/api/applications`
+- **Description**: Logs a new job application.
 - **Request Body**:
-  ```json
-  {
-    "companyName": "Company A",
-    "jobTitle": "Software Engineer",
-    "applicationDate": "2024-12-22",
-    "status": "applied",
-    "notes": "Applied through LinkedIn",
-    "attachments": [
-      "resume.pdf",
-      "coverLetter.pdf"
-    ]
+```json
+{
+  "companyName": "InnovateTech",
+  "jobTitle": "Full Stack Developer",
+  "applicationDate": "2024-12-22",
+  "status": "Applied",
+  "notes": "Applied through the company website."
+}
+```
+- **Response**:
+```json
+{
+  "message": "Job application logged successfully",
+  "application": {
+    "id": 1,
+    "companyName": "InnovateTech",
+    "jobTitle": "Full Stack Developer",
+    "status": "Applied"
   }
-  ```
+}
+```
+- **Authentication**: Required.
+
+#### **2.2 Upload Attachments**
+**POST** `/api/applications/:id/attachments`
+- **Description**: Uploads documents like resumes and cover letters.
+- **Request Body**: Form-data with files.
 - **Response**:
-  ```json
-  {
-    "message": "Job application added successfully",
-    "applicationId": 1
+```json
+{
+  "message": "Attachment uploaded successfully",
+  "attachmentUrl": "https://s3.amazonaws.com/attachments/resume.pdf"
+}
+```
+- **Authentication**: Required.
+
+#### **2.3 Update Job Application**
+**PUT** `/api/applications/:id`
+- **Description**: Updates an existing job application.
+- **Request Body**:
+```json
+{
+  "status": "Interviewed",
+  "notes": "Completed technical interview."
+}
+```
+- **Response**:
+```json
+{
+  "message": "Application updated successfully",
+  "application": {
+    "status": "Interviewed",
+    "notes": "Completed technical interview."
   }
-  ```
+}
+```
+- **Authentication**: Required.
 
-#### **GET /api/applications**
-- **Description**: Retrieve all job applications for the authenticated user.
-- **Headers**: 
-  - Authorization: Bearer JWT_TOKEN
-- **Response**:
-  ```json
-  [
-    {
-      "applicationId": 1,
-      "companyName": "Company A",
-      "jobTitle": "Software Engineer",
-      "status": "applied",
-      "applicationDate": "2024-12-22",
-      "notes": "Applied through LinkedIn"
-    }
-  ]
-  ```
+---
 
-#### **GET /api/applications/{id}**
-- **Description**: Fetch a specific job application by ID.
+## **3. Reminder System**
+
+### **Endpoints**
+
+#### **3.1 Set a Reminder**
+**POST** `/api/reminders`
+- **Description**: Creates a follow-up reminder.
+- **Request Body**:
+```json
+{
+  "applicationId": 1,
+  "reminderDate": "2024-12-29",
+  "message": "Send a thank-you email to the recruiter"
+}
+```
 - **Response**:
-  ```json
+```json
+{
+  "message": "Reminder created successfully",
+  "reminder": {
+    "id": 1,
+    "reminderDate": "2024-12-29",
+    "message": "Send a thank-you email to the recruiter"
+  }
+}
+```
+- **Authentication**: Required.
+
+#### **3.2 Get Upcoming Reminders**
+**GET** `/api/reminders`
+- **Description**: Retrieves all upcoming reminders.
+- **Response**:
+```json
+[
   {
+    "id": 1,
     "applicationId": 1,
-    "companyName": "Company A",
-    "jobTitle": "Software Engineer",
-    "status": "applied",
-    "applicationDate": "2024-12-22",
-    "notes": "Applied through LinkedIn",
-    "attachments": [
-      "resume.pdf",
-      "coverLetter.pdf"
-    ]
+    "reminderDate": "2024-12-29",
+    "message": "Send a thank-you email to the recruiter"
   }
-  ```
+]
+```
+- **Authentication**: Required.
 
 ---
 
-### 3. **Reminder System**
+## **4. Company Information Management**
 
-#### **POST /api/reminders**
-- **Description**: Set a reminder for a job application.
+### **Endpoints**
+
+#### **4.1 Store Company Information**
+**POST** `/api/companies`
+- **Description**: Adds a new company profile.
 - **Request Body**:
-  ```json
+```json
+{
+  "name": "InnovateTech",
+  "industry": "Software Development",
+  "size": "100-500",
+  "notes": "Innovative company with a focus on AI."
+}
+```
+- **Response**:
+```json
+{
+  "message": "Company profile created successfully",
+  "company": {
+    "id": 1,
+    "name": "InnovateTech"
+  }
+}
+```
+- **Authentication**: Required.
+
+---
+
+## **5. Application Progress Visualization**
+
+### **Endpoints**
+
+#### **5.1 Dashboard Overview**
+**GET** `/api/dashboard`
+- **Description**: Retrieves an overview of job search progress.
+- **Response**:
+```json
+{
+  "totalApplications": 12,
+  "statuses": {
+    "Applied": 8,
+    "Interviewed": 3,
+    "Offered": 1
+  }
+}
+```
+- **Authentication**: Required.
+
+---
+
+## **6. Search and Filtering**
+
+### **Endpoints**
+
+#### **6.1 Search Applications**
+**GET** `/api/applications/search`
+- **Description**: Searches job applications by keyword.
+- **Query Parameters**: `?q=InnovateTech`
+- **Response**:
+```json
+[
   {
+    "id": 1,
+    "companyName": "InnovateTech",
+    "jobTitle": "Full Stack Developer"
+  }
+]
+```
+- **Authentication**: Required.
+
+---
+
+## **7. Notes**
+
+### **Endpoints**
+
+#### **7.1 Add Notes**
+**POST** `/api/applications/:id/notes`
+- **Description**: Adds a note to a job application.
+- **Request Body**:
+```json
+{
+  "note": "Discussed the company culture and team structure."
+}
+```
+- **Response**:
+```json
+{
+  "message": "Note added successfully",
+  "note": {
+    "id": 1,
     "applicationId": 1,
-    "reminderDate": "2024-12-30",
-    "message": "Follow up with Company A"
+    "note": "Discussed the company culture and team structure."
   }
-  ```
-- **Response**:
-  ```json
-  {
-    "message": "Reminder set successfully"
-  }
-  ```
-
-#### **GET /api/reminders**
-- **Description**: Fetch all reminders for the authenticated user.
-- **Response**:
-  ```json
-  [
-    {
-      "reminderId": 1,
-      "applicationId": 1,
-      "reminderDate": "2024-12-30",
-      "message": "Follow up with Company A"
-    }
-  ]
-  ```
-
-#### **GET /api/reminders/notifications**
-- **Description**: Retrieve pending reminders that require notifications (for email alerts).
-- **Response**:
-  ```json
-  [
-    {
-      "reminderId": 1,
-      "applicationId": 1,
-      "reminderDate": "2024-12-30",
-      "message": "Follow up with Company A",
-      "email": "user1@example.com"
-    }
-  ]
-  ```
-
----
-
-### 4. **Company Information Management**
-
-#### **POST /api/companies**
-- **Description**: Add a new company profile.
-- **Request Body**:
-  ```json
-  {
-    "companyName": "Company A",
-    "contactInfo": "contact@companya.com",
-    "companySize": "500-1000",
-    "industry": "Technology",
-    "notes": "Interested in applying for software engineering roles"
-  }
-  ```
-- **Response**:
-  ```json
-  {
-    "message": "Company profile created successfully"
-  }
-  ```
-
-#### **GET /api/companies**
-- **Description**: Retrieve all company profiles for the authenticated user.
-- **Response**:
-  ```json
-  [
-    {
-      "companyId": 1,
-      "companyName": "Company A",
-      "contactInfo": "contact@companya.com",
-      "companySize": "500-1000",
-      "industry": "Technology",
-      "notes": "Interested in applying for software engineering roles"
-    }
-  ]
-  ```
-
----
-
-### 5. **Application Progress Visualization**
-
-#### **GET /api/dashboard**
-- **Description**: Retrieve an overview of the user’s job application progress.
-- **Response**:
-  ```json
-  {
-    "totalApplications": 10,
-    "applied": 7,
-    "interviewed": 2,
-    "offered": 1,
-    "rejected": 0
-  }
-  ```
-
-#### **GET /api/dashboard/stats**
-- **Description**: Get statistics and charts for application statuses, response rates, etc.
-- **Response**:
-  ```json
-  {
-    "statusDistribution": {
-      "applied": 7,
-      "interviewed": 2,
-      "offered": 1,
-      "rejected": 0
-    },
-    "responseRate": "70%"
-  }
-  ```
-
----
-
-### 6. **Search and Filtering**
-
-#### **GET /api/applications/search**
-- **Description**: Search for job applications based on company name or job title.
-- **Query Parameters**:
-  - `searchTerm`: Keyword to search.
-- **Response**:
-  ```json
-  [
-    {
-      "applicationId": 1,
-      "companyName": "Company A",
-      "jobTitle": "Software Engineer",
-      "status": "applied",
-      "applicationDate": "2024-12-22"
-    }
-  ]
-  ```
-
-#### **GET /api/applications/filter**
-- **Description**: Filter job applications by status, date range, or other criteria.
-- **Query Parameters**:
-  - `status`: e.g., "applied", "interviewed"
-  - `startDate`: Start date for the filter.
-  - `endDate`: End date for the filter.
-- **Response**:
-  ```json
-  [
-    {
-      "applicationId": 1,
-      "companyName": "Company A",
-      "jobTitle": "Software Engineer",
-      "status": "applied",
-      "applicationDate": "2024-12-22"
-    }
-  ]
-  ```
-
----
-
-### 7. **Notes**
-
-#### **POST /api/notes**
-- **Description**: Add a note to a job application.
-- **Request Body**:
-  ```json
-  {
-    "applicationId": 1,
-    "note": "Followed up via email on 2024-12-23"
-  }
-  ```
-- **Response**:
-  ```json
-  {
-    "message": "Note added successfully"
-  }
-  ```
-
-#### **GET /api/notes/{applicationId}**
-- **Description**: Retrieve all notes for a specific job application.
-- **Response**:
-  ```json
-  [
-    {
-      "noteId": 1,
-      "applicationId": 1,
-      "note": "Followed up via email on 2024-12-23",
-      "createdAt": "2024-12-23"
-    }
-  ]
-  ```
-
----
-
-### Documentation Reference:
-- **Backend Framework**: Node.js with Express
-- **Database**: SQL (MySQL or PostgreSQL)
-- **Authentication**: JWT (JSON Web Tokens)
-- **Email Notifications**: SendGrid or similar service
-- **Version Control**: Git with GitHub
-- **Deployment**: AWS
-
-This API design can be expanded and refined based on additional user needs and implementation details.
+}
+```
+- **Authentication**: Required.
